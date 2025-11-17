@@ -2313,15 +2313,23 @@ class _AboutState extends State<_About> {
                     translate('Privacy Statement'),
                     style: linkStyle,
                   ).marginSymmetric(vertical: 4.0)),
-              InkWell(
-                  onTap: () {
-                    launchUrlString('https://rustdesk.com');
-                  },
-                  child: Text(
-                    translate('Website'),
-                    style: linkStyle,
-                  ).marginSymmetric(vertical: 4.0)),
-              Container(
+               InkWell(
+                   onTap: () {
+                     launchUrlString('https://rustdesk.com');
+                   },
+                   child: Text(
+                     translate('Website'),
+                     style: linkStyle,
+                   ).marginSymmetric(vertical: 4.0)),
+               InkWell(
+                   onTap: () {
+                     launchUrlString('https://github.com/LagoSpa/rustdesk');
+                   },
+                   child: Text(
+                     'GitHub',
+                     style: linkStyle,
+                   ).marginSymmetric(vertical: 4.0)),
+               Container(
                 decoration: const BoxDecoration(color: Color(0xFF2c8cff)),
                 padding:
                     const EdgeInsets.symmetric(vertical: 24, horizontal: 8),
