@@ -703,7 +703,11 @@ pub fn get_new_version() -> String {
 
 #[inline]
 pub fn get_version() -> String {
-    crate::VERSION.to_owned()
+    if cfg!(debug_assertions) {
+        format!("d{}", crate::VERSION)
+    } else {
+        crate::VERSION.to_owned()
+    }
 }
 
 #[cfg(any(target_os = "android", target_os = "ios", feature = "flutter"))]
