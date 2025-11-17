@@ -45,10 +45,34 @@ fn initialize(app_dir: &str, custom_client_config: &str) {
         *config::APP_DIR.write().unwrap() = app_dir.to_owned();
     }
     // core_main's load_custom_client does not work for flutter since it is only applied to its load_library in main.c
-    if custom_client_config.is_empty() {
+    log::info!("Loading custom client configuration");
+
+    // Always try to load custom.txt first
+    let mut custom_file_exists = false;
+    if let Some(path) = std::env::current_exe().map_or(None, |x| x.parent().map(|x| x.to_path_buf())) {
+        #[cfg(target_os = "macos")]
+        let path = path.join("../Resources");
+        let custom_path = path.join("custom.txt");
+        if custom_path.is_file() {
+            log::info!("Found custom.txt at: {:?}", custom_path);
+            custom_file_exists = true;
+        } else {
+            log::info!("No custom.txt found at: {:?}", custom_path);
+        }
+    }
+
+    if custom_file_exists {
+        log::info!("Loading custom.txt configuration");
         crate::load_custom_client();
+        log::info!("Custom configuration loaded from custom.txt");
     } else {
-        crate::read_custom_client(custom_client_config);
+        // No custom.txt found, use existing config if available
+        if custom_client_config.is_empty() {
+            log::info!("Using default configuration (no custom config available)");
+        } else {
+            log::info!("Using existing custom client config (custom.txt not found)");
+            crate::read_custom_client(custom_client_config);
+        }
     }
     #[cfg(target_os = "android")]
     {

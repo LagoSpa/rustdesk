@@ -1753,24 +1753,40 @@ pub fn rustdesk_interval(i: Interval) -> ThrottledInterval {
 }
 
 pub fn load_custom_client() {
+    log::info!("load_custom_client() called");
     #[cfg(debug_assertions)]
-    if let Ok(data) = std::fs::read_to_string("./custom.txt") {
-        read_custom_client(data.trim());
-        return;
+    {
+        log::info!("Debug mode: checking ./custom.txt");
+        if let Ok(data) = std::fs::read_to_string("./custom.txt") {
+            log::info!("Found custom.txt in current directory, loading...");
+            read_custom_client(data.trim());
+            log::info!("Custom client config loaded from ./custom.txt");
+            return;
+        } else {
+            log::info!("No custom.txt found in current directory");
+        }
     }
     let Some(path) = std::env::current_exe().map_or(None, |x| x.parent().map(|x| x.to_path_buf()))
     else {
+        log::warn!("Could not determine executable path");
         return;
     };
     #[cfg(target_os = "macos")]
     let path = path.join("../Resources");
-    let path = path.join("custom.txt");
-    if path.is_file() {
-        let Ok(data) = std::fs::read_to_string(&path) else {
-            log::error!("Failed to read custom client config");
+    let custom_path = path.join("custom.txt");
+    log::info!("Release mode: checking custom.txt at: {:?}", custom_path);
+    if custom_path.is_file() {
+        log::info!("Found custom.txt at executable directory, reading...");
+        let Ok(data) = std::fs::read_to_string(&custom_path) else {
+            log::error!("Failed to read custom client config from {:?}", custom_path);
             return;
         };
+        log::info!("Successfully read custom.txt, parsing...");
         read_custom_client(&data.trim());
+        log::info!("Custom client config loaded from executable directory");
+        return;
+    } else {
+        log::info!("No custom.txt found at executable directory: {:?}", custom_path);
     }
 }
 
@@ -1851,24 +1867,27 @@ pub fn get_dst_align_rgba() -> usize {
 }
 
 pub fn read_custom_client(config: &str) {
-    let Ok(data) = decode64(config) else {
-        log::error!("Failed to decode custom client config");
-        return;
-    };
-    const KEY: &str = "5Qbwsde3unUcJBtrx9ZkvUmwFNoExHzpryHuPUdqlWM=";
-    let Some(pk) = get_rs_pk(KEY) else {
-        log::error!("Failed to parse public key of custom client");
-        return;
-    };
-    let Ok(data) = sign::verify(&data, &pk) else {
-        log::error!("Failed to dec custom client config");
-        return;
-    };
-    let Ok(mut data) =
-        serde_json::from_slice::<std::collections::HashMap<String, serde_json::Value>>(&data)
-    else {
-        log::error!("Failed to parse custom client config");
-        return;
+    let mut data = if let Ok(data) = serde_json::from_str::<std::collections::HashMap<String, serde_json::Value>>(config) {
+        data
+    } else {
+        let Ok(data) = decode64(config) else {
+            log::error!("Failed to decode custom client config");
+            return;
+        };
+        const KEY: &str = "5Qbwsde3unUcJBtrx9ZkvUmwFNoExHzpryHuPUdqlWM=";
+        let Some(pk) = get_rs_pk(KEY) else {
+            log::error!("Failed to parse public key of custom client");
+            return;
+        };
+        let Ok(data) = sign::verify(&data, &pk) else {
+            log::error!("Failed to dec custom client config");
+            return;
+        };
+        let Ok(data) = serde_json::from_slice::<std::collections::HashMap<String, serde_json::Value>>(&data) else {
+            log::error!("Failed to parse custom client config");
+            return;
+        };
+        data
     };
 
     if let Some(app_name) = data.remove("app-name") {
