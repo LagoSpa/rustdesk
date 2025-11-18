@@ -1,10 +1,10 @@
 name: playground
 
 on:
-  #schedule:
-    # schedule build every night
-  #  - cron: "0/6 * * * *"
   workflow_dispatch:
+  #schedule:
+  # schedule build every night
+  #  - cron: "0/6 * * * *"
 
 env:
   RUST_VERSION: "1.75" # https://github.com/rustdesk/rustdesk/discussions/7503
@@ -45,7 +45,7 @@ jobs:
               flutter: "3.13.9",
               ref: "f6509e3fd6917aa976bad2fc684182601ebf2434",
               bridge: "1.80.1",
-              date: "20231219"
+              date: "20231219",
             }
           - {
               target: x86_64-apple-darwin,
@@ -55,7 +55,7 @@ jobs:
               flutter: "3.10.6",
               ref: "f6509e3fd6917aa976bad2fc684182601ebf2434",
               bridge: "1.80.1",
-              date: "20231219"
+              date: "20231219",
             }
           - {
               target: x86_64-apple-darwin,
@@ -65,7 +65,7 @@ jobs:
               flutter: "3.10.6",
               ref: "85ddfc0739f052cab0029c46b899b959ee94eeb8",
               bridge: "1.80.1",
-              date: "20231119"
+              date: "20231119",
             }
           - {
               target: x86_64-apple-darwin,
@@ -75,7 +75,7 @@ jobs:
               flutter: "3.13.9",
               ref: "85ddfc0739f052cab0029c46b899b959ee94eeb8",
               bridge: "1.80.1",
-              date: "20231119"
+              date: "20231119",
             }
     steps:
       - name: Export GitHub Actions cache environment variables
@@ -163,7 +163,7 @@ jobs:
       - name: Install vcpkg dependencies
         run: |
           $VCPKG_ROOT/vcpkg install --x-install-root="$VCPKG_ROOT/installed"
-          
+
       - name: Restore from cache and install vcpkg
         uses: lukka/run-vcpkg@v7
         if: false
@@ -228,7 +228,6 @@ jobs:
           tag_name: ${{ env.TAG_NAME }}
           files: |
             rustdesk*-${{ matrix.job.arch }}*.dmg
-
 
   build-rustdesk-android:
     if: false
