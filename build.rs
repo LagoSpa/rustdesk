@@ -80,6 +80,13 @@ fn install_android_deps() {
 fn main() {
     hbb_common::gen_version();
     install_android_deps();
+
+    // Ensure custom_client_public_key.txt exists (create empty if not)
+    if !std::path::Path::new("custom_client_public_key.txt").exists() {
+        std::fs::write("custom_client_public_key.txt", "").expect("Failed to create custom_client_public_key.txt");
+    }
+    println!("cargo:rerun-if-changed=custom_client_public_key.txt");
+
     #[cfg(all(windows, feature = "inline"))]
     build_manifest();
     #[cfg(windows)]
