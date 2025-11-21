@@ -34,7 +34,7 @@ env:
   # vcpkg version: 2025.08.27
   # If we change the `VCPKG COMMIT_ID`, please remember:
   # 1. Call `$VCPKG_ROOT/vcpkg x-update-baseline` to update the baseline in `vcpkg.json`.
-  #  Or we may face build issue like
+  #  Or we may face build issue like 
   #  https://github.com/rustdesk/rustdesk/actions/runs/14414119794/job/40427970174
   # 2. Update the `VCPKG_COMMIT_ID` in `ci.yml` and `playground.yml`.
   VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
@@ -62,9 +62,15 @@ jobs:
     strategy:
       fail-fast: false
 
+  custom-client-setup:
+    uses: ./.github/workflows/custom-client-setup.yml
+    with:
+      client_type: ${{ inputs.client_type }}
+
   build-for-windows-flutter:
     name: ${{ matrix.job.target }}
-    needs: [build-RustDeskTempTopMostWindow, generate-bridge]
+    needs:
+      [build-RustDeskTempTopMostWindow, generate-bridge, custom-client-setup]
     runs-on: ${{ matrix.job.os }}
     strategy:
       fail-fast: false
@@ -163,11 +169,22 @@ jobs:
           head -n 100 "${VCPKG_ROOT}/buildtrees/ffmpeg/build-${{ matrix.job.vcpkg-triplet }}-rel-out.log" || true
         shell: bash
 
+      - name: Download custom client config
+        if: needs.custom-client-setup.outputs.has-custom-config == 'true'
+        uses: actions/download-artifact@master
+        with:
+          name: ${{ inputs.client_type != '' && format('custom-client-config-{0}', inputs.client_type) || 'custom-client-config' }}
+          path: .
+
       - name: Build rustdesk
         run: |
           # Windows: build RustDesk
           python3 .\build.py --portable --hwcodec --flutter --vram --skip-portable-pack
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
+
+          if (Test-Path "custom.txt") {
+            Copy-Item "custom.txt" -Destination "./rustdesk/"
+          }
 
           # Download usbmmidd_v2.zip and extract it to ./rustdesk
           Invoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip

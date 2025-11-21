@@ -1,0 +1,13 @@
+name: Custom Client Build
+
+on: workflow_dispatch
+
+jobs:
+  setup:
+    strategy:
+      matrix:
+        environment: [custom_client_backoffice, custom_client_retailer]
+    uses: ./.github/workflows/custom-client-setup.yml
+    with:
+      environment: ${{ matrix.environment }}
+    secrets: inherit
