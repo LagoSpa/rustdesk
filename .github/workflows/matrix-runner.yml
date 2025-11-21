@@ -1,0 +1,23 @@
+name: Matrix Runner
+
+on:
+  workflow_dispatch
+
+jobs:
+  run-tests:
+    strategy:
+      matrix:
+        environment: [custom_client_backoffice, custom_client_retailer]
+    uses: ./.github/workflows/print-ciao.yml
+    with:
+      environment: ${{ matrix.environment }}
+    secrets: inherit
+
+  run-custom-config:
+    strategy:
+      matrix:
+        environment: [custom_client_backoffice, custom_client_retailer]
+    uses: ./.github/workflows/print-custom-config.yml
+    with:
+      environment: ${{ matrix.environment }}
+    secrets: inherit

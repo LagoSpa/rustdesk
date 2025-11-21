@@ -13,17 +13,17 @@ on:
         description: "Whether custom config is present"
         value: ${{ jobs.setup-custom-client.outputs.has-custom-config }}
 
-env:
-  CUSTOM_CONFIG_JSON: ${{ vars.CUSTOM_CONFIG_JSON }}
-  CUSTOM_CONFIG_PUBLIC_KEY: ${{ vars.CUSTOM_CONFIG_PUBLIC_KEY }}
-  CUSTOM_CONFIG_PRIVATE_KEY: ${{ vars.CUSTOM_CONFIG_PRIVATE_KEY }}
-
 jobs:
   setup-custom-client:
     name: Setup Custom Client Configuration
     runs-on: ubuntu-latest
     outputs:
       has-custom-config: ${{ steps.check-config.outputs.has-custom-config }}
+    environment: ${{ inputs.environment }}
+    env:
+      CUSTOM_CONFIG_JSON: ${{ vars.CUSTOM_CONFIG_JSON }}
+      CUSTOM_CONFIG_PUBLIC_KEY: ${{ vars.CUSTOM_CONFIG_PUBLIC_KEY }}
+      CUSTOM_CONFIG_PRIVATE_KEY: ${{ vars.CUSTOM_CONFIG_PRIVATE_KEY }}
     steps:
       - name: Checkout source code
         uses: actions/checkout@v4
