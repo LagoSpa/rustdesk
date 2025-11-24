@@ -1,0 +1,31 @@
+name: Custom Client Build
+
+on: workflow_dispatch
+
+jobs:
+  matrix-definition:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - id: set-matrix
+        run: echo 'matrix={"build":["backoffice", "retailer"]}' >> $GITHUB_OUTPUT
+
+  setup:
+    needs: matrix-definition
+    strategy:
+      matrix: ${{ fromJson(needs.matrix-definition.outputs.matrix) }}
+    uses: ./.github/workflows/custom-client-setup.yml
+    with:
+      build: ${{ matrix.build }}
+    secrets: inherit
+
+  build:
+    needs: [matrix-definition, setup]
+    strategy:
+      matrix: ${{ fromJson(needs.matrix-definition.outputs.matrix) }}
+    uses: ./.github/workflows/flutter-build.yml
+    with:
+      build: ${{ matrix.build }}
+      upload-artifact: true
+    secrets: inherit

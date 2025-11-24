@@ -3,38 +3,43 @@ name: build RustDeskTempTopMostWindow
 on:
   workflow_call:
     inputs:
-        upload-artifact:
-          type: boolean
-          default: true
-        target:
-            description: 'Target'
-            required: true
-            type: string
-            default: 'windows-2022'
-        configuration:
-            description: 'Configuration'
-            required: true
-            type: string
-            default: 'Release'
-        platform:
-            description: 'Platform'
-            required: true
-            type: string
-            default: 'x64'
-        target_version:
-            description: 'TargetVersion'
-            required: true
-            type: string
-            default: 'Windows10'
+      upload-artifact:
+        type: boolean
+        default: true
+      target:
+        description: "Target"
+        required: true
+        type: string
+        default: "windows-2022"
+      configuration:
+        description: "Configuration"
+        required: true
+        type: string
+        default: "Release"
+      platform:
+        description: "Platform"
+        required: true
+        type: string
+        default: "x64"
+      target_version:
+        description: "TargetVersion"
+        required: true
+        type: string
+        default: "Windows10"
+      build:
+        type: string
+        description: "Build type"
+        default: ""
 
 env:
   project_path: WindowInjection/WindowInjection.vcxproj
+  ARTIFACT_SUFFIX: "${{ inputs.build != '' && format('-{0}', inputs.build) || '' }}"
 
 jobs:
   build-RustDeskTempTopMostWindow:
     runs-on: ${{ inputs.target }}
     strategy:
-        fail-fast: false
+      fail-fast: false
     env:
       build_output_dir: RustDeskTempTopMostWindow/WindowInjection/${{ inputs.platform }}/${{ inputs.configuration }}
     steps:
@@ -55,6 +60,6 @@ jobs:
         uses: actions/upload-artifact@master
         if: ${{ inputs.upload-artifact }}
         with:
-            name: topmostwindow-artifacts
-            path: |
-              ./${{ env.build_output_dir }}/WindowInjection.dll
+          name: topmostwindow-artifacts${{ env.ARTIFACT_SUFFIX }}
+          path: |
+            ./${{ env.build_output_dir }}/WindowInjection.dll

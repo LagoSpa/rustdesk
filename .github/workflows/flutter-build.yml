@@ -3,6 +3,10 @@ name: Build the flutter version of the RustDesk
 on:
   workflow_call:
     inputs:
+      build:
+        type: string
+        description: "Build type"
+        default: ""
       upload-artifact:
         type: boolean
         default: true
@@ -46,10 +50,13 @@ env:
   MACOS_P12_BASE64: "${{ secrets.MACOS_P12_BASE64 }}"
   UPLOAD_ARTIFACT: "${{ inputs.upload-artifact }}"
   SIGN_BASE_URL: "${{ secrets.SIGN_BASE_URL }}"
+  ARTIFACT_SUFFIX: "${{ inputs.build != '' && format('-{0}', inputs.build) || '' }}"
 
 jobs:
   generate-bridge:
     uses: ./.github/workflows/bridge.yml
+    with:
+      build: ${{ inputs.build }}
 
   build-RustDeskTempTopMostWindow:
     uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
@@ -59,6 +66,7 @@ jobs:
       configuration: Release
       platform: x64
       target_version: Windows10
+      build: ${{ inputs.build }}
     strategy:
       fail-fast: false
 
@@ -95,8 +103,21 @@ jobs:
       - name: Restore bridge files
         uses: actions/download-artifact@master
         with:
-          name: bridge-artifact
+          name: bridge-artifact${{ env.ARTIFACT_SUFFIX }}
           path: ./
+
+      - name: Download custom public key
+        if: ${{ inputs.build != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: custom-public-key${{ env.ARTIFACT_SUFFIX }}
+
+      - name: Download custom config file
+        if: ${{ inputs.build != '' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: custom-config${{ env.ARTIFACT_SUFFIX }}
+          path: ./rustdesk/Release/
 
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1
@@ -223,14 +244,14 @@ jobs:
         uses: actions/download-artifact@master
         if: ${{ inputs.upload-artifact }}
         with:
-          name: topmostwindow-artifacts
+          name: topmostwindow-artifacts${{ env.ARTIFACT_SUFFIX }}
           path: "./rustdesk"
 
       - name: Upload unsigned
         if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@master
         with:
-          name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
+          name: rustdesk-unsigned-windows-${{ matrix.job.arch }}${{ env.ARTIFACT_SUFFIX }}
           path: rustdesk
 
       - name: Sign rustdesk files
@@ -401,7 +422,7 @@ jobs:
         if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@master
         with:
-          name: rustdesk-unsigned-windows-${{ matrix.job.arch }}
+          name: rustdesk-unsigned-windows-${{ matrix.job.arch }}${{ env.ARTIFACT_SUFFIX }}
           path: Release
 
       - name: Sign rustdesk files
@@ -519,7 +540,7 @@ jobs:
       - name: Restore bridge files
         uses: actions/download-artifact@master
         with:
-          name: bridge-artifact
+          name: bridge-artifact${{ env.ARTIFACT_SUFFIX }}
           path: ./
 
       - name: Build rustdesk lib
@@ -530,7 +551,7 @@ jobs:
       - name: Upload liblibrustdesk.a Artifacts
         uses: actions/upload-artifact@master
         with:
-          name: liblibrustdesk.a
+          name: liblibrustdesk.a${{ env.ARTIFACT_SUFFIX }}
           path: target/aarch64-apple-ios/release/liblibrustdesk.a
 
       - name: Build rustdesk
@@ -670,7 +691,7 @@ jobs:
       - name: Restore bridge files
         uses: actions/download-artifact@master
         with:
-          name: bridge-artifact
+          name: bridge-artifact${{ env.ARTIFACT_SUFFIX }}
           path: ./
 
       - name: Setup vcpkg with Github Actions binary cache
@@ -728,7 +749,7 @@ jobs:
         if: env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@master
         with:
-          name: rustdesk-unsigned-macos-${{ matrix.job.arch }}
+          name: rustdesk-unsigned-macos-${{ matrix.job.arch }}${{ env.ARTIFACT_SUFFIX }}
           path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.dmg # can not upload the directory directly or tar.gz, which destroy the link structure, causing the codesign failed
 
       - name: Codesign app and create signed dmg
@@ -956,7 +977,7 @@ jobs:
       - name: Restore bridge files
         uses: actions/download-artifact@master
         with:
-          name: bridge-artifact
+          name: bridge-artifact${{ env.ARTIFACT_SUFFIX }}
           path: ./
 
       - name: Install Rust toolchain
@@ -1003,7 +1024,7 @@ jobs:
       - name: Upload Rustdesk library to Artifacts
         uses: actions/upload-artifact@master
         with:
-          name: librustdesk.so.${{ matrix.job.target }}
+          name: librustdesk.so.${{ matrix.job.target }}${{ env.ARTIFACT_SUFFIX }}
           path: ./target/${{ matrix.job.target }}/release/liblibrustdesk.so
 
       - name: Build rustdesk
@@ -1084,7 +1105,7 @@ jobs:
         if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@master
         with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ env.ARTIFACT_SUFFIX }}.apk
           path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
 
       - name: Publish signed apk package
@@ -1188,7 +1209,7 @@ jobs:
       - name: Restore bridge files
         uses: actions/download-artifact@master
         with:
-          name: bridge-artifact
+          name: bridge-artifact${{ env.ARTIFACT_SUFFIX }}
           path: ./
 
       - name: Download Rustdesk library from Artifacts
@@ -1269,7 +1290,7 @@ jobs:
         if: env.ANDROID_SIGNING_KEY != null && env.UPLOAD_ARTIFACT == 'true'
         uses: actions/upload-artifact@master
         with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.apk
+          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ env.ARTIFACT_SUFFIX }}.apk
           path: ${{steps.sign-rustdesk.outputs.signedReleaseFile}}
 
       - name: Publish signed apk package
@@ -1372,7 +1393,7 @@ jobs:
         if: matrix.job.arch == 'x86_64' || env.UPLOAD_ARTIFACT == 'true'
         uses: actions/download-artifact@master
         with:
-          name: bridge-artifact
+          name: bridge-artifact${{ env.ARTIFACT_SUFFIX }}
           path: ./
 
       - name: Setup vcpkg with Github Actions binary cache
@@ -1407,7 +1428,7 @@ jobs:
         if: matrix.job.arch == 'x86_64' || env.UPLOAD_ARTIFACT == 'true'
         uses: actions/download-artifact@master
         with:
-          name: bridge-artifact
+          name: bridge-artifact${{ env.ARTIFACT_SUFFIX }}
           path: ./
 
       - uses: rustdesk-org/run-on-arch-action@amd64-support
@@ -1596,7 +1617,7 @@ jobs:
         uses: actions/upload-artifact@master
         if: env.UPLOAD_ARTIFACT == 'true'
         with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.deb
+          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ env.ARTIFACT_SUFFIX }}.deb
           path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.deb
 
       # only x86_64 for arch since we can not find newest arm64 docker image to build
@@ -1858,7 +1879,7 @@ jobs:
         uses: actions/upload-artifact@master
         if: env.UPLOAD_ARTIFACT == 'true'
         with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
+          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter${{ env.ARTIFACT_SUFFIX }}.deb
           path: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-sciter.deb
 
   build-appimage:
