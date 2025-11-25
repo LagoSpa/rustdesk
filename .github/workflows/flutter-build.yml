@@ -117,7 +117,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: custom-config${{ env.ARTIFACT_SUFFIX }}
-          path: ./rustdesk/Release/
+          path: ./rustdesk
 
       - name: Install LLVM and Clang
         uses: KyleMayes/install-llvm-action@v1
@@ -189,6 +189,7 @@ jobs:
           # Windows: build RustDesk
           python3 .\build.py --portable --hwcodec --flutter --vram --skip-portable-pack
           mv ./flutter/build/windows/x64/runner/Release ./rustdesk
+          if (Test-Path ./rustdesk/custom.txt) { mv ./rustdesk/custom.txt ./rustdesk/Release -ErrorAction SilentlyContinue }
 
           # Download usbmmidd_v2.zip and extract it to ./rustdesk
           Invoke-WebRequest -Uri https://github.com/rustdesk-org/rdev/releases/download/usbmmidd_v2/usbmmidd_v2.zip -OutFile usbmmidd_v2.zip
@@ -798,27 +799,27 @@ jobs:
         if: false
         uses: actions/download-artifact@master
         with:
-          name: rustdesk-unsigned-macos-x86_64
+          name: rustdesk-unsigned-macos-x86_64${{ env.ARTIFACT_SUFFIX }}
           path: ./
 
       - name: Download Artifacts
         if: false
         uses: actions/download-artifact@master
         with:
-          name: rustdesk-unsigned-macos-aarch64
+          name: rustdesk-unsigned-macos-aarch64${{ env.ARTIFACT_SUFFIX }}
           path: ./
 
       - name: Download Artifacts
         uses: actions/download-artifact@master
         with:
-          name: rustdesk-unsigned-windows-x86_64
+          name: rustdesk-unsigned-windows-x86_64${{ env.ARTIFACT_SUFFIX }}
           path: ./windows-x86_64/
 
       - name: Download Artifacts
         if: false
         uses: actions/download-artifact@master
         with:
-          name: rustdesk-unsigned-windows-x86
+          name: rustdesk-unsigned-windows-x86${{ env.ARTIFACT_SUFFIX }}
           path: ./windows-x86/
 
       - name: Combine unsigned app
@@ -831,7 +832,7 @@ jobs:
         with:
           prerelease: true
           tag_name: ${{ env.TAG_NAME }}
-          files: rustdesk-${{ env.VERSION }}-unsigned.tar.gz
+          files: rustdesk-${{ env.VERSION }}-unsigned${{ env.ARTIFACT_SUFFIX }}.tar.gz
 
   build-rustdesk-android:
     if: false
@@ -1903,7 +1904,7 @@ jobs:
       - name: Download Binary
         uses: actions/download-artifact@master
         with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}.deb
+          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}${{ env.ARTIFACT_SUFFIX }}.deb
           path: .
 
       - name: Rename Binary
