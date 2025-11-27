@@ -1,0 +1,64 @@
+name: Custom client
+
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: "Build"
+        type: choice
+        options:
+          - "ALL"
+          - "retailer"
+          - "backoffice"
+        default: "ALL"
+        required: false
+      upload-artifact:
+        description: "Upload artifacts"
+        type: boolean
+        default: false
+      upload-tag:
+        description: "Upload tag"
+        type: string
+        default: "custom"
+
+jobs:
+  matrix:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - id: matrix
+        run: |
+          echo 'matrix={"build":[${{ inputs.build != 'ALL' && format( '"{0}"', inputs.build) || '"retailer", "backoffice"' }}]}' >> $GITHUB_OUTPUT
+
+  setup:
+    needs: matrix
+    strategy:
+      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
+    uses: ./.github/workflows/custom-client-setup.yml
+    with:
+      build: ${{ matrix.build }}
+    secrets: inherit
+
+  build-bridge:
+    uses: ./.github/workflows/bridge.yml
+
+  build-topmostwin:
+    uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
+    with:
+      upload-artifact: true
+      target: windows-2022
+      configuration: Release
+      platform: x64
+      target_version: Windows10
+
+  build:
+    needs: [matrix, setup, build-bridge, build-topmostwin]
+    strategy:
+      matrix: ${{ fromJson(needs.matrix.outputs.matrix) }}
+    uses: ./.github/workflows/custom-client-build.yml
+    with:
+      build: ${{ matrix.build }}
+      upload-artifact: ${{ inputs.upload-artifact }}
+      upload-tag: ${{ inputs.upload-tag }}
+    secrets: inherit

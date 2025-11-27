@@ -1,4 +1,4 @@
-name: Custom Client Setup
+name: Custom client setup
 
 on:
   workflow_call:
@@ -38,11 +38,11 @@ jobs:
       - name: Custom client, generate or validate encryption keys
         shell: bash
         run: |
-          if [ -n "${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}" ] && [ -n "${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}" ]; then
+          if [ -n '${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}' ] && [ -n '${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}' ]; then
             echo "Validating provided keys..."
-            python3 res/custom_client_utils.py validate-keys --public-key "${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}" --private-key "${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}"
-            echo "${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}" > custom_client_public_key.txt
-            echo "${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}" > custom_client_private_key.txt
+            python3 res/custom_client_utils.py validate-keys --public-key '${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}' --private-key '${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}'
+            echo '${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}' > custom_client_public_key.txt
+            echo '${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}' > custom_client_private_key.txt
           else
             echo "Generating new keypair..."
             python3 res/custom_client_utils.py generate-keys
