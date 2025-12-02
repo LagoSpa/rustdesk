@@ -1,0 +1,82 @@
+name: Custom client
+
+on:
+  workflow_dispatch:
+    inputs:
+      environments:
+        description: "All environments"
+        type: boolean
+        default: true
+      environment:
+        description: "Single environment"
+        type: environment
+      upload-artifact:
+        description: "Upload artifacts"
+        type: boolean
+        default: false
+      upload-tag:
+        description: "Upload tag"
+        type: string
+        default: "custom"
+
+jobs:
+  environments:
+    runs-on: ubuntu-latest
+    outputs:
+      environments: ${{ steps.single.outputs.envs || steps.all.outputs.envs }}
+    steps:
+      - id: single
+        if: ${{ inputs.environments != true }}
+        run: |
+          ENVS='[${{ format( '"{0}"', inputs.environment) }}]'
+
+          echo "envs=${ENVS}" >> $GITHUB_OUTPUT
+
+      - id: all
+        if: ${{ inputs.environments == true }}
+        run: |
+          ENVS="$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+                    "https://api.github.com/repos/${{ github.repository }}/environments" | \
+                  jq -c '.environments | map(.name)')"
+
+          echo "envs=${ENVS}" >> $GITHUB_OUTPUT
+
+  setup:
+    if: ${{ needs.environments.outputs.environments != '' }}
+    needs: environments
+    strategy:
+      matrix:
+        environments: ${{ fromJson(needs.environments.outputs.environments) }}
+    uses: ./.github/workflows/custom-client-setup.yml
+    with:
+      environment: ${{ matrix.environments }}
+    secrets: inherit
+
+  build-bridge:
+    needs: environments
+    if: ${{ needs.environments.outputs.environments != '' }}
+    uses: ./.github/workflows/bridge.yml
+
+  build-topmostwin:
+    if: ${{ needs.environments.outputs.environments != '' }}
+    needs: environments
+    uses: ./.github/workflows/third-party-RustDeskTempTopMostWindow.yml
+    with:
+      upload-artifact: true
+      target: windows-2022
+      configuration: Release
+      platform: x64
+      target_version: Windows10
+
+  build:
+    if: ${{ needs.environments.outputs.environments != '' }}
+    needs: [environments, setup, build-bridge, build-topmostwin]
+    strategy:
+      matrix:
+        environments: ${{ fromJson(needs.environments.outputs.environments) }}
+    uses: ./.github/workflows/custom-client-build.yml
+    with:
+      environment: ${{ matrix.environments }}
+      upload-artifact: ${{ inputs.upload-artifact }}
+      upload-tag: ${{ inputs.upload-tag }}
+    secrets: inherit
