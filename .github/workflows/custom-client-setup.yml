@@ -39,6 +39,7 @@ jobs:
           name: custom-public-key-${{ inputs.environment }}
           path: custom_client_public_key.txt
           if-no-files-found: error
+          overwrite: true
 
       - name: Upload custom client private key
         uses: actions/upload-artifact@v4
@@ -46,6 +47,7 @@ jobs:
           name: custom-private-key-${{ inputs.environment }}
           path: custom_client_private_key.txt
           if-no-files-found: error
+          overwrite: true
 
       - name: Custom client, validate and encrypt config
         shell: bash
@@ -59,6 +61,7 @@ jobs:
           name: custom-config-json-${{ inputs.environment }}
           path: custom.json
           if-no-files-found: error
+          overwrite: true
 
       - name: Upload custom client config - encrypted txt
         uses: actions/upload-artifact@v4
@@ -66,3 +69,4 @@ jobs:
           name: custom-config-${{ inputs.environment }}
           path: custom.txt
           if-no-files-found: error
+          overwrite: true
