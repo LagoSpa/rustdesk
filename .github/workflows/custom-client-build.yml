@@ -6,19 +6,12 @@ on:
       environment:
         type: string
         required: true
-      upload-artifact:
-        type: boolean
-        default: false
-      upload-tag:
-        type: string
-        default: "custom"
 
 env:
   SCITER_RUST_VERSION: "1.75"
   RUST_VERSION: "1.75"
   LLVM_VERSION: "15.0.6"
   FLUTTER_VERSION: "3.24.5"
-  TAG_NAME: "${{ inputs.upload-tag }}"
   VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
   VCPKG_COMMIT_ID: "120deac3062162151622ca4860575a33844ba10b"
   VERSION: "1.4.4"
@@ -189,39 +182,8 @@ jobs:
           name: topmostwindow-artifacts
           path: "./rustdesk"
 
-      - name: Download custom config file
-        uses: actions/download-artifact@v4
-        with:
-          name: custom-config-${{ inputs.environment }}
-          path: ./rustdesk
-
       - name: Upload unsigned
         uses: actions/upload-artifact@master
         with:
           name: rustdesk-unsigned-windows-${{ matrix.job.arch }}-${{ inputs.environment }}
           path: rustdesk
-
-      - name: Build self-extracted executable
-        shell: bash
-        run: |
-          sed -i '/dpiAware/d' res/manifest.xml
-          pushd ./libs/portable
-          pip3 install -r requirements.txt
-          python3 ./generate.py -f ../../rustdesk/ -o . -e ../../rustdesk/rustdesk.exe
-          popd
-          mv ./target/release/rustdesk-portable-packer.exe ./rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-${{ inputs.environment }}.exe
-
-      - name: Upload self-extracted
-        uses: actions/upload-artifact@master
-        with:
-          name: rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-${{ inputs.environment }}.exe
-          path: ./rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-${{ inputs.environment }}.exe
-
-      - name: Publish self-extracted
-        uses: softprops/action-gh-release@v1
-        if: env.UPLOAD_ARTIFACT == 'true'
-        with:
-          prerelease: true
-          tag_name: ${{ env.TAG_NAME }}
-          files: |
-            ./rustdesk-${{ env.VERSION }}-${{ matrix.job.arch }}-${{ inputs.environment }}.exe
