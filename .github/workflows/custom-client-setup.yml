@@ -19,15 +19,10 @@ jobs:
       - name: Custom client, install python
         uses: actions/setup-python@v6
 
-      - name: Custom client, validate config JSON
+      - name: Custom client, validate or generate encryption keys
         shell: bash
         run: |
           pip install pynacl
-          python3 res/custom_client_utils.py validate-json --config '${{ secrets.CUSTOM_CONFIG_JSON }}'
-
-      - name: Custom client, generate or validate encryption keys
-        shell: bash
-        run: |
           if [ -n '${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}' ] && [ -n '${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}' ]; then
             echo "Validating provided keys..."
             python3 res/custom_client_utils.py validate-keys --public-key '${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}' --private-key '${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}'
@@ -37,11 +32,6 @@ jobs:
             echo "Generating new keypair..."
             python3 res/custom_client_utils.py generate-keys
           fi
-
-      - name: Custom client, encrypt config
-        shell: bash
-        run: |
-          python3 res/custom_client_utils.py encrypt --config '${{ secrets.CUSTOM_CONFIG_JSON }}' --private-key "$(cat custom_client_private_key.txt)" --output custom.txt
 
       - name: Upload custom client public key
         uses: actions/upload-artifact@v4
@@ -57,7 +47,20 @@ jobs:
           path: custom_client_private_key.txt
           if-no-files-found: error
 
-      - name: Upload custom client config
+      - name: Custom client, validate and encrypt config
+        shell: bash
+        run: |
+          python3 res/custom_client_utils.py encrypt --config '${{ secrets.CUSTOM_CONFIG_JSON }}' --private-key "$(cat custom_client_private_key.txt)" --output custom.txt
+          echo '${{ secrets.CUSTOM_CONFIG_JSON }}' > custom.json
+
+      - name: Upload custom client config - plain json
+        uses: actions/upload-artifact@v4
+        with:
+          name: custom-config-json-${{ inputs.environment }}
+          path: custom.json
+          if-no-files-found: error
+
+      - name: Upload custom client config - encrypted txt
         uses: actions/upload-artifact@v4
         with:
           name: custom-config-${{ inputs.environment }}
