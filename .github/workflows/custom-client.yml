@@ -10,6 +10,10 @@ on:
       environment:
         description: "Single environment"
         type: environment
+      build:
+        description: "Build"
+        type: boolean
+        default: true
       upload-artifact:
         description: "Upload artifacts"
         type: boolean
@@ -69,7 +73,7 @@ jobs:
       target_version: Windows10
 
   build:
-    if: ${{ needs.environments.outputs.environments != '' }}
+    if: ${{ inputs.build == true && needs.environments.outputs.environments != '' }}
     needs: [environments, setup, build-bridge, build-topmostwin]
     strategy:
       matrix:
