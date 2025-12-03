@@ -74,6 +74,11 @@ def encrypt_config(config_json: str, private_key_b64: str) -> str:
         print("PyNaCl is required. Install with: pip install pynacl", file=sys.stderr)
         sys.exit(1)
 
+    # Validate JSON before encryption
+    if not validate_json_config(config_json):
+        print("Invalid JSON configuration provided", file=sys.stderr)
+        sys.exit(1)
+
     # Decode private key
     private_key_bytes = base64.b64decode(private_key_b64)
     signing_key = nacl.signing.SigningKey(private_key_bytes)
