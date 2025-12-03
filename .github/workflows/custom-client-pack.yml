@@ -54,6 +54,7 @@ jobs:
         with:
           name: rustdesk-custom-unsigned-windows-${{ matrix.job.arch }}-${{ inputs.environment }}
           path: rustdesk
+          overwrite: true
 
       - name: Build self-extracted executable
         shell: bash
@@ -70,6 +71,7 @@ jobs:
         with:
           name: rustdesk-custom-${{ env.VERSION }}-${{ matrix.job.arch }}-${{ inputs.environment }}.exe
           path: ./rustdesk-custom-${{ env.VERSION }}-${{ matrix.job.arch }}-${{ inputs.environment }}.exe
+          overwrite: true
 
       - name: Publish self-extracted
         uses: softprops/action-gh-release@v1
