@@ -25,9 +25,9 @@ jobs:
           pip install pynacl
           if [ -n '${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}' ] && [ -n '${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}' ]; then
             echo "Validating provided keys..."
-            python3 res/custom_client_utils.py validate-keys --public-key '${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}' --private-key '${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}'
-            echo '${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}' > custom_client_public_key.txt
-            echo '${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}' > custom_client_private_key.txt
+            echo -n '${{ secrets.CUSTOM_CONFIG_PUBLIC_KEY }}' > custom_client_public_key.txt
+            echo -n '${{ secrets.CUSTOM_CONFIG_PRIVATE_KEY }}' > custom_client_private_key.txt
+            python3 res/custom_client_utils.py validate-keys --public-key custom_client_public_key.txt --private-key custom_client_private_key.txt
           else
             echo "Generating new keypair..."
             python3 res/custom_client_utils.py generate-keys
@@ -52,8 +52,8 @@ jobs:
       - name: Custom client, validate and encrypt config
         shell: bash
         run: |
-          python3 res/custom_client_utils.py encrypt --config '${{ secrets.CUSTOM_CONFIG_JSON }}' --private-key "$(cat custom_client_private_key.txt)" --output custom.txt
-          echo '${{ secrets.CUSTOM_CONFIG_JSON }}' > custom.json
+          echo -n '${{ secrets.CUSTOM_CONFIG_JSON }}' > custom.json
+          python3 res/custom_client_utils.py encrypt --config custom.json --private-key custom_client_private_key.txt --output custom.txt
 
       - name: Upload custom client config - plain json
         uses: actions/upload-artifact@v4
