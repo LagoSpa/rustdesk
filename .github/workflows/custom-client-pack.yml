@@ -46,8 +46,12 @@ jobs:
       - name: Download custom config file
         uses: actions/download-artifact@v4
         with:
-          name: custom-config-${{ inputs.environment }}
+          #name: custom-config-${{ inputs.environment }}
+          name: custom-config-json-${{ inputs.environment }}
           path: ./rustdesk
+
+      - name: Rename custom config file
+        run: mv ./rustdesk/custom.json ./rustdesk/custom.txt
 
       - name: Upload unsigned
         uses: actions/upload-artifact@master
